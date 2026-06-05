@@ -1,6 +1,8 @@
 <div align="center">
 
-# 🧠 skillrl
+<img src="assets/banner.png" alt="skillrl — Train the prompt, not the weights." width="100%" />
+
+<br />
 
 ### *The TRL of skill / prompt-space optimization.*
 
