@@ -301,21 +301,6 @@ PRs welcome.
 
 ---
 
-## 11. Citation
+## 11. License
 
-If you use `skillrl` in academic work, please also cite the upstream paper:
-
-```bibtex
-@article{skillopt2026,
-  title  = {Optimizing LLM Agent Skills End-to-End},
-  author = {Yang, et al.},
-  year   = {2026},
-  url    = {https://microsoft.github.io/SkillOpt/}
-}
-```
-
----
-
-## 12. License
-
-MIT. See [LICENSE](LICENSE) (if present) or `pyproject.toml`.
+MIT. See [LICENSE](LICENSE).

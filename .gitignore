@@ -53,3 +53,5 @@ runs/
 .env
 .env.*
 !.env.example
+dist/
+build/

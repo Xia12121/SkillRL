@@ -8,10 +8,11 @@ version = "1.0.0"
 description = "A TRL-like training library for end-to-end skill optimization of frozen LLM agents (based on Microsoft SkillOpt)."
 readme = "README.md"
 requires-python = ">=3.10"
-license = { text = "MIT" }
+license = { file = "LICENSE" }
 authors = [{ name = "skillrl contributors" }]
 keywords = ["llm", "agent", "skill", "prompt-optimization", "text-space-optimization", "skillopt", "trl"]
 classifiers = [
+    "Development Status :: 4 - Beta",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -19,6 +20,7 @@ classifiers = [
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
     "Intended Audience :: Science/Research",
+    "Intended Audience :: Developers",
     "Topic :: Scientific/Engineering :: Artificial Intelligence",
 ]
 dependencies = [
@@ -28,15 +30,23 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=7.0", "pytest-mock>=3.10", "ruff>=0.5"]
+dev = [
+    "pytest>=7.0",
+    "pytest-mock>=3.10",
+    "ruff>=0.5",
+    "build>=1.2",
+    "twine>=5.0",
+]
 
 [project.urls]
-Homepage = "https://github.com/your-org/skillrl"
-"Reference Paper" = "https://arxiv.org/abs/2605.23904"
+Homepage = "https://github.com/Xia12121/SkillRL"
+Repository = "https://github.com/Xia12121/SkillRL"
+Issues = "https://github.com/Xia12121/SkillRL/issues"
 "Reference Repo" = "https://github.com/microsoft/SkillOpt"
 
 [tool.setuptools.packages.find]
 include = ["skillrl*"]
+exclude = ["tests*", "examples*"]
 
 [tool.setuptools.package-data]
-skillrl = ["prompts/*.md", "envs/data/*.json"]
+skillrl = ["prompts/*.md", "envs/data/*.json", "py.typed"]
