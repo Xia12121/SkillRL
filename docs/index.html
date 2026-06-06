@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>skillrl — Train the prompt, not the weights.</title>
+<meta name="description" content="skillrl is a clean, modular Python library for end-to-end optimization of LLM-agent skills — no fine-tuning required. The TRL of skill / prompt-space optimization." />
+<meta property="og:title" content="skillrl — Train the prompt, not the weights." />
+<meta property="og:description" content="A clean, modular Python library for end-to-end optimization of LLM-agent skills — no fine-tuning required." />
+<meta property="og:image" content="banner.png" />
+<meta property="og:type" content="website" />
+<meta name="twitter:card" content="summary_large_image" />
+
+<link rel="icon" type="image/png" href="logo.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
+
+<style>
+  :root {
+    --bg-0: #07091a;
+    --bg-1: #0d1130;
+    --bg-2: #141a45;
+    --fg:    #e7ecff;
+    --fg-mute: #9aa3c7;
+    --accent-blue:   #4c8bff;
+    --accent-violet: #8a5cff;
+    --accent-cyan:   #28d9c2;
+    --accent-grad: linear-gradient(120deg, #4c8bff 0%, #8a5cff 50%, #28d9c2 100%);
+    --border: rgba(255,255,255,0.08);
+    --card: rgba(255,255,255,0.03);
+    --card-hover: rgba(255,255,255,0.06);
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; }
+  body {
+    font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', sans-serif;
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(138,92,255,0.18), transparent 60%),
+      radial-gradient(900px 500px at -10% 20%, rgba(76,139,255,0.18), transparent 60%),
+      radial-gradient(700px 400px at 50% 100%, rgba(40,217,194,0.12), transparent 60%),
+      var(--bg-0);
+    background-attachment: fixed;
+    color: var(--fg);
+    line-height: 1.65;
+    -webkit-font-smoothing: antialiased;
+    overflow-x: hidden;
+  }
+  body::before {
+    content: '';
+    position: fixed; inset: 0;
+    background-image:
+      radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px);
+    background-size: 22px 22px;
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  a { color: var(--accent-blue); text-decoration: none; }
+  a:hover { color: var(--accent-cyan); }
+
+  code, pre, kbd { font-family: 'JetBrains Mono', ui-monospace, Menlo, Consolas, monospace; }
+
+  .container {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 0 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ============ NAV ============ */
+  nav {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    background: rgba(7,9,26,0.6);
+    border-bottom: 1px solid var(--border);
+  }
+  nav .inner {
+    max-width: 1080px;
+    margin: 0 auto;
+    padding: 14px 24px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+  }
+  .brand {
+    display: flex; align-items: center; gap: 10px;
+    font-weight: 800; font-size: 18px; color: var(--fg);
+    letter-spacing: -0.01em;
+  }
+  .brand img { width: 28px; height: 28px; border-radius: 6px; }
+  .nav-links { display: flex; gap: 22px; font-size: 14px; }
+  .nav-links a { color: var(--fg-mute); font-weight: 500; }
+  .nav-links a:hover { color: var(--fg); }
+
+  @media (max-width: 640px) {
+    .nav-links { display: none; }
+  }
+
+  /* ============ HERO ============ */
+  header.hero {
+    padding: 80px 0 60px;
+    text-align: center;
+  }
+  header.hero .banner-wrap {
+    margin-bottom: 36px;
+    border-radius: 18px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    box-shadow: 0 24px 80px -20px rgba(76,139,255,0.35);
+  }
+  header.hero .banner-wrap img { display: block; width: 100%; height: auto; }
+
+  header.hero h1.tagline {
+    font-size: clamp(28px, 4.6vw, 48px);
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin: 0 0 16px;
+    background: var(--accent-grad);
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+    line-height: 1.15;
+  }
+  header.hero p.lead {
+    font-size: clamp(16px, 1.7vw, 19px);
+    color: var(--fg-mute);
+    max-width: 720px;
+    margin: 0 auto 32px;
+  }
+  header.hero p.lead b { color: var(--fg); }
+
+  .cta-row {
+    display: flex; gap: 12px; flex-wrap: wrap; justify-content: center;
+    margin-bottom: 28px;
+  }
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    padding: 12px 22px;
+    border-radius: 10px;
+    font-weight: 600; font-size: 15px;
+    border: 1px solid var(--border);
+    transition: transform .15s ease, background .15s ease, border-color .15s ease;
+  }
+  .btn:hover { transform: translateY(-1px); }
+  .btn-primary {
+    background: var(--accent-grad);
+    color: #fff !important;
+    border-color: transparent;
+    box-shadow: 0 8px 24px -10px rgba(138,92,255,0.6);
+  }
+  .btn-primary:hover { color: #fff !important; }
+  .btn-ghost {
+    background: var(--card);
+    color: var(--fg) !important;
+  }
+  .btn-ghost:hover { background: var(--card-hover); border-color: rgba(255,255,255,0.18); }
+
+  .install {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    background: rgba(0,0,0,0.45);
+    border: 1px solid var(--border);
+    padding: 12px 18px;
+    border-radius: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 15px;
+  }
+  .install .prompt { color: var(--accent-cyan); }
+  .install .copy {
+    cursor: pointer;
+    background: transparent;
+    border: none;
+    color: var(--fg-mute);
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-family: inherit;
+    font-size: 12px;
+    transition: background .15s, color .15s;
+  }
+  .install .copy:hover { color: var(--fg); background: rgba(255,255,255,0.07); }
+
+  .badges {
+    margin-top: 28px;
+    display: flex; flex-wrap: wrap; gap: 8px; justify-content: center;
+  }
+  .badges img { height: 22px; }
+
+  /* ============ SECTIONS ============ */
+  section {
+    padding: 72px 0;
+    border-top: 1px solid var(--border);
+  }
+  section h2 {
+    font-size: clamp(24px, 3vw, 32px);
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    margin: 0 0 12px;
+  }
+  section p.section-lead {
+    color: var(--fg-mute);
+    max-width: 720px;
+    margin: 0 0 36px;
+    font-size: 16px;
+  }
+
+  /* ============ WHY (cards) ============ */
+  .grid-3 {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 18px;
+  }
+  @media (max-width: 880px) { .grid-3 { grid-template-columns: 1fr; } }
+
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 24px;
+    transition: border-color .2s ease, transform .2s ease, background .2s ease;
+  }
+  .card:hover {
+    border-color: rgba(138,92,255,0.45);
+    transform: translateY(-3px);
+    background: var(--card-hover);
+  }
+  .card .icon {
+    width: 38px; height: 38px;
+    border-radius: 10px;
+    background: var(--accent-grad);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 20px; margin-bottom: 14px;
+  }
+  .card h3 { margin: 0 0 8px; font-size: 18px; font-weight: 700; }
+  .card p { margin: 0; color: var(--fg-mute); font-size: 14.5px; }
+
+  /* ============ ANALOGY TABLE ============ */
+  .analogy {
+    overflow: hidden;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+  }
+  .analogy table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 15px;
+  }
+  .analogy th, .analogy td {
+    padding: 14px 18px;
+    text-align: left;
+    border-bottom: 1px solid var(--border);
+  }
+  .analogy th {
+    background: rgba(255,255,255,0.04);
+    font-weight: 700;
+    color: var(--fg);
+  }
+  .analogy tr:last-child td { border-bottom: none; }
+  .analogy td:first-child { color: var(--fg-mute); width: 38%; }
+  .analogy td b { color: var(--accent-cyan); }
+
+  /* ============ CODE BLOCK ============ */
+  pre.code {
+    background: rgba(0,0,0,0.55);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px 22px;
+    overflow-x: auto;
+    font-size: 14px;
+    line-height: 1.7;
+    margin: 0;
+  }
+  pre.code .kw  { color: #c792ea; }
+  pre.code .fn  { color: #82aaff; }
+  pre.code .str { color: #c3e88d; }
+  pre.code .num { color: #f78c6c; }
+  pre.code .com { color: #6f7aa6; font-style: italic; }
+  pre.code .id  { color: #e7ecff; }
+
+  /* ============ PIPELINE ============ */
+  .pipeline {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 14px;
+  }
+  @media (max-width: 880px) { .pipeline { grid-template-columns: repeat(2, 1fr); } }
+  .step {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 20px;
+    position: relative;
+  }
+  .step .num {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    color: var(--accent-cyan);
+    margin-bottom: 8px;
+  }
+  .step h4 { margin: 0 0 6px; font-size: 16px; font-weight: 700; }
+  .step p { margin: 0; color: var(--fg-mute); font-size: 14px; }
+
+  /* ============ FOOTER ============ */
+  footer {
+    padding: 40px 0 60px;
+    border-top: 1px solid var(--border);
+    text-align: center;
+    color: var(--fg-mute);
+    font-size: 14px;
+  }
+  footer .links { margin-bottom: 12px; display: flex; gap: 18px; justify-content: center; flex-wrap: wrap; }
+  footer .links a { color: var(--fg-mute); }
+  footer .links a:hover { color: var(--fg); }
+  footer small { color: rgba(154,163,199,0.6); }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="inner">
+    <a class="brand" href="#top">
+      <img src="logo.png" alt="skillrl logo" />
+      skillrl
+    </a>
+    <div class="nav-links">
+      <a href="#why">Why</a>
+      <a href="#how">How it works</a>
+      <a href="#quickstart">Quickstart</a>
+      <a href="https://pypi.org/project/skillrl/" target="_blank" rel="noopener">PyPI</a>
+      <a href="https://github.com/Xia12121/SkillRL" target="_blank" rel="noopener">GitHub</a>
+    </div>
+  </div>
+</nav>
+
+<a id="top"></a>
+<div class="container">
+
+  <header class="hero">
+    <div class="banner-wrap">
+      <img src="banner.png" alt="skillrl — Train the prompt, not the weights." />
+    </div>
+
+    <h1 class="tagline">Train the prompt, not the weights.</h1>
+    <p class="lead">
+      <b>skillrl</b> is a clean, modular Python library for <b>end-to-end optimization of LLM-agent skills</b> — no fine-tuning required. Built on the core algorithm of Microsoft <a href="https://microsoft.github.io/SkillOpt/" target="_blank" rel="noopener">SkillOpt</a>, with an API designed in the spirit of 🤗 <a href="https://github.com/huggingface/trl" target="_blank" rel="noopener">TRL</a>.
+    </p>
+
+    <div class="cta-row">
+      <a class="btn btn-primary" href="https://github.com/Xia12121/SkillRL" target="_blank" rel="noopener">⭐ Star on GitHub</a>
+      <a class="btn btn-ghost" href="https://pypi.org/project/skillrl/" target="_blank" rel="noopener">📦 View on PyPI</a>
+      <a class="btn btn-ghost" href="#quickstart">🚀 Quickstart</a>
+    </div>
+
+    <div class="install">
+      <span class="prompt">$</span>
+      <span id="install-cmd">pip install skillrl</span>
+      <button class="copy" onclick="copyInstall(this)">copy</button>
+    </div>
+
+    <div class="badges">
+      <a href="https://pypi.org/project/skillrl/" target="_blank" rel="noopener"><img src="https://img.shields.io/pypi/v/skillrl?color=4c1&label=PyPI&logo=pypi&logoColor=white" alt="PyPI" /></a>
+      <a href="https://pypi.org/project/skillrl/" target="_blank" rel="noopener"><img src="https://img.shields.io/pypi/pyversions/skillrl?color=3776AB&logo=python&logoColor=white" alt="Python" /></a>
+      <a href="https://github.com/Xia12121/SkillRL/blob/main/LICENSE" target="_blank" rel="noopener"><img src="https://img.shields.io/badge/license-MIT-blue.svg" alt="License" /></a>
+      <a href="https://github.com/Xia12121/SkillRL" target="_blank" rel="noopener"><img src="https://img.shields.io/github/stars/Xia12121/SkillRL?style=social" alt="Stars" /></a>
+    </div>
+  </header>
+
+  <section id="why">
+    <h2>Why skillrl?</h2>
+    <p class="section-lead">Modern LLM agents are usually improved in one of two ways. Both have hard ceilings. We propose a third path.</p>
+
+    <div class="grid-3">
+      <div class="card">
+        <div class="icon">🔧</div>
+        <h3>Fine-tune the weights</h3>
+        <p>Expensive, opaque, and often impossible if the model is closed-source.</p>
+      </div>
+      <div class="card">
+        <div class="icon">✍️</div>
+        <h3>Hand-tweak the prompt</h3>
+        <p>Cheap but brittle, ad-hoc, and notoriously hard to reproduce or scale.</p>
+      </div>
+      <div class="card" style="border-color: rgba(40,217,194,0.45);">
+        <div class="icon">✅</div>
+        <h3>Train the skill document</h3>
+        <p>A natural-language markdown <i>skill</i> becomes the trainable state. Both LLMs stay frozen.</p>
+      </div>
+    </div>
+
+    <div style="height: 36px;"></div>
+
+    <div class="analogy">
+      <table>
+        <thead>
+          <tr><th>SGD on weights</th><th>SkillOpt on skill text</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Forward pass</td><td><b>① Rollout</b> — target agent runs the skill on a batch</td></tr>
+          <tr><td>Loss computation</td><td><b>② Analyze</b> — optimizer LLM diagnoses each failure</td></tr>
+          <tr><td>Backward pass / gradient</td><td><b>③ Patch</b> — optimizer proposes textual edits to the skill</td></tr>
+          <tr><td>Optimizer step (e.g. Adam)</td><td><b>④ Gate</b> — accept the new skill only if it actually improves</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <section id="how">
+    <h2>How it works</h2>
+    <p class="section-lead">Every training step is a four-stage closed loop. Each stage is a pluggable component you can swap.</p>
+
+    <div class="pipeline">
+      <div class="step"><div class="num">STEP 01</div><h4>Rollout</h4><p>Run the current skill on a batch of tasks with the frozen target LLM.</p></div>
+      <div class="step"><div class="num">STEP 02</div><h4>Analyze</h4><p>The frozen optimizer LLM critiques failures and extracts patterns.</p></div>
+      <div class="step"><div class="num">STEP 03</div><h4>Patch</h4><p>Generate concrete textual edits to the skill document.</p></div>
+      <div class="step"><div class="num">STEP 04</div><h4>Gate</h4><p>Re-evaluate. Keep the patch only if score improves; otherwise revert.</p></div>
+    </div>
+  </section>
+
+  <section id="quickstart">
+    <h2>Quickstart</h2>
+    <p class="section-lead">A complete training loop in under 20 lines. The API mirrors Hugging Face TRL — if you've used <code>PPOTrainer</code>, you already know <code>SkillOptTrainer</code>.</p>
+
+<pre class="code"><span class="com"># pip install skillrl</span>
+<span class="kw">from</span> <span class="id">skillrl</span> <span class="kw">import</span> <span class="fn">SkillOptConfig</span>, <span class="fn">SkillOptTrainer</span>
+
+<span class="id">config</span> = <span class="fn">SkillOptConfig</span>(
+    <span class="id">num_epochs</span>   = <span class="num">10</span>,
+    <span class="id">batch_size</span>   = <span class="num">8</span>,
+    <span class="id">edit_budget</span>  = <span class="num">3</span>,
+    <span class="id">out_root</span>     = <span class="str">"outputs/run-001"</span>,
+)
+
+<span class="id">trainer</span> = <span class="fn">SkillOptTrainer</span>(
+    <span class="id">config</span>      = <span class="id">config</span>,
+    <span class="id">target_llm</span>  = <span class="id">my_target_llm</span>,    <span class="com"># any callable: prompt -> str</span>
+    <span class="id">optimizer_llm</span> = <span class="id">my_optimizer_llm</span>, <span class="com"># any callable: prompt -> str</span>
+    <span class="id">dataset</span>     = <span class="id">my_dataset</span>,
+    <span class="id">reward_fn</span>   = <span class="id">my_reward_fn</span>,
+)
+
+<span class="id">trainer</span>.<span class="fn">train</span>()  <span class="com"># skill evolves; best checkpoint persisted to out_root/</span></pre>
+  </section>
+
+  <section id="install">
+    <h2>Get started</h2>
+    <p class="section-lead">Available now on PyPI. Requires Python 3.10+.</p>
+    <div class="cta-row" style="justify-content: flex-start;">
+      <a class="btn btn-primary" href="https://github.com/Xia12121/SkillRL" target="_blank" rel="noopener">⭐ Star on GitHub</a>
+      <a class="btn btn-ghost" href="https://pypi.org/project/skillrl/" target="_blank" rel="noopener">📦 PyPI page</a>
+      <a class="btn btn-ghost" href="https://github.com/Xia12121/SkillRL/issues" target="_blank" rel="noopener">🐛 Report an issue</a>
+    </div>
+  </section>
+
+</div>
+
+<footer>
+  <div class="container">
+    <div class="links">
+      <a href="https://github.com/Xia12121/SkillRL" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://pypi.org/project/skillrl/" target="_blank" rel="noopener">PyPI</a>
+      <a href="https://github.com/Xia12121/SkillRL/blob/main/README.md" target="_blank" rel="noopener">README</a>
+      <a href="https://github.com/Xia12121/SkillRL/blob/main/LICENSE" target="_blank" rel="noopener">License</a>
+    </div>
+    <div>Released under the MIT License.</div>
+    <small>Built with care for everyone who'd rather train a markdown file than a billion weights.</small>
+  </div>
+</footer>
+
+<script>
+  function copyInstall(btn) {
+    const text = document.getElementById('install-cmd').innerText;
+    navigator.clipboard.writeText(text).then(() => {
+      const old = btn.innerText;
+      btn.innerText = 'copied ✓';
+      btn.style.color = '#28d9c2';
+      setTimeout(() => { btn.innerText = old; btn.style.color = ''; }, 1400);
+    });
+  }
+</script>
+
+</body>
+</html>
